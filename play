@@ -13,9 +13,9 @@ season = File.basename(frame_dir)
 Dir.chdir(frame_dir)
 
 @parts = []
-Dir.glob("electricsheep*.webm").sort.each do |seq|
+Dir.glob("electricsheep*.mp4").sort.each do |seq|
   seq1 = seq.split("_")[0]
-  seq2 = seq.split("_")[1].sub(/\.webm$/,"")
+  seq2 = seq.split("_")[1].sub(/\.mp4$/,"")
   seq = File.absolute_path(seq)
   if seq1 == seq2
     2.times { @parts << seq}
