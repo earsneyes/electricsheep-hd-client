@@ -326,6 +326,7 @@ def download_sequence
       end
     end
     File.rename("#{@movie_dir}/incomplete_#{wanted}","#{@movie_dir}/#{wanted}")
+    system("ffmpeg -i '#{@movie_dir}/#{wanted}' '#{@movie_dir}/#{wanted.sub(/\.webm$/, '.mp4')}'")
   end
   return "OK"
 end
