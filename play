@@ -1,14 +1,24 @@
 #!/usr/bin/env ruby
 # This script plays a seasons passed as ARV[0] from a random offset
 # If ARGV[0] is not given it reads from .active-season
-
 `which mpv` ; raise "Install mpv (https://mpv.io/) to use this script" if $? != 0
+
 require 'socket'
+require 'optparse'
+
 PLAYLIST = "eshd.m3u"
 INPUTCONF = File.absolute_path(File.dirname(__FILE__)) + "/mpv-input.conf"
 
-ARGV[0] ||= File.dirname(__FILE__) + "/branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
-frame_dir = ARGV[0]
+@options={}
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename(__FILE__)} [OPTIONS]"
+  opts.on("--only-m3u", TrueClass, "Create the m3u and exit")
+  opts.on("--stop-screensaver", TrueClass, "Prevent the screensaver from starting while play is running")
+  opts.on("-d DIRECTORY", "--directory DIRECTORY" , String, "Path to dir to play")
+end.parse!(into: @options)
+
+@options[:"directory"] ||= File.dirname(__FILE__) + "/branches/" + File.read(File.dirname(__FILE__) + "/.active-season") + "/movies/"
+frame_dir = @options[:"directory"]
 season = File.basename(frame_dir)
 Dir.chdir(frame_dir)
 
@@ -25,6 +35,7 @@ Dir.glob("electricsheep*.mp4").sort.each do |seq|
 end
 
 puts "Got #{@parts.count} parts"
+
 OFFSET = rand(0..(@parts.count))
 
 if @parts.count < 1
@@ -32,7 +43,9 @@ if @parts.count < 1
 end
 File.open(PLAYLIST, "w") { |f| f.write @parts.rotate(OFFSET).join("\n") }
 
-mpv_args = %W(--input-conf="#{INPUTCONF}" --loop-playlist=inf --no-input-default-bindings --no-stop-screensaver --no-osc -fs --panscan=1 --idle --quiet #{PLAYLIST})
+exit if @options[:"only-m3u"]
+
+mpv_args = %W(--input-conf="#{INPUTCONF}" --loop-playlist=inf --no-input-default-bindings #{(@options[:"stop-screensaver"] ? "--stop-screensaver" : "--no-stop-screensaver")} --no-osc -fs --panscan=1 --idle --quiet #{PLAYLIST})
 mpv_args << "--wid #{ENV['XSCREENSAVER_WINDOW']}" if ENV['XSCREENSAVER_WINDOW']
 
 mpv = Thread.new do
